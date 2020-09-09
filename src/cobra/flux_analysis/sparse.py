@@ -85,7 +85,7 @@ def find_leaks(model):
 
 
 def find_leak_mode(model, leaks=[], cutoff_mult=1):
-    """ The minimal set of reactions needed to for production
+    """ The minimal set of reactions needed for production
     of leak metabolites (leak_mode) cand be found by min of
     the following program:
 
