@@ -80,7 +80,7 @@ def find_leaks(model):
     for var in w_model.variables:
         if 'aux' in var.name:
             if var.primal > zero_cutoff:
-                leaks.extend([var.name.replace('aux_', ''), var.primal])
+                leaks.append([var.name.replace('aux_', ''), var.primal])
 
     return leaks
 
@@ -113,7 +113,7 @@ def find_leak_mode(model, leaks=[], cutoff_mult=1):
     model: cobra.core.Model
         The cobra model to find leaks from
     leaks: list
-        A list of leaking metabolites
+        A list of leaking metabolites and fluxes
     Returns
     -------
     leak_modes: dict
@@ -180,7 +180,7 @@ def find_leak_mode(model, leaks=[], cutoff_mult=1):
 
     # find active reactions for every leak individually
     leak_modes = {}
-    for leak in leaks:
+    for leak, flux in leaks:
         rxns_in_mode = []
 
         met_var = w_model.variables.get("aux_{}".format(leak))
