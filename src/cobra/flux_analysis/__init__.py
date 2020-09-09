@@ -20,3 +20,4 @@ from cobra.flux_analysis.variability import (
 )
 from cobra.flux_analysis.phenotype_phase_plane import production_envelope
 from cobra.flux_analysis.room import add_room, room
+from cobra.flux_analysis.sparse import find_leaks, find_leak_mode
