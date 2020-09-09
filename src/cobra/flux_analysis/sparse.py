@@ -191,6 +191,6 @@ def find_leak_mode(model, leaks=[], cutoff_mult=1):
         rxns_in_mode = [[rxn.id, sol.fluxes[rxn.id]] for rxn in w_model.reactions
                         if abs(sol.fluxes[rxn.id]) >= cutoff_mult * zero_cutoff]
         leak_modes[leak] = rxns_in_mode
-        print(leak, sol.status, len(rxns_in_mode))
+        print(leak, sol.status, len(rxns_in_mode), met_var.primal)
 
     return leak_modes
