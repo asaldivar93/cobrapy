@@ -44,13 +44,13 @@ def find_leaks(model):
     for met in w_model.metabolites:
         # Create auxilliary variable y
         met_var = prob.Variable("aux_{}".format(met.id),
-                                lb = 0
+                                lb=0
                                 )
         # Create constraint
         const = prob.Constraint(Zero,
-                                name = met.id,
-                                lb = 0,
-                                ub = 0
+                                name=met.id,
+                                lb=0,
+                                ub=0
                                 )
         w_model.add_cons_vars([met_var, const])
 
@@ -70,7 +70,7 @@ def find_leaks(model):
         obj_vars.extend([met_var])
 
     # Set objective to max(sum(met_vars))
-    w_model.objective = prob.Objective(Zero, direction = 'max')
+    w_model.objective = prob.Objective(Zero, direction='max')
     w_model.objective.set_linear_coefficients({o: 1 for o in obj_vars})
 
     w_model.optimize()
@@ -84,7 +84,7 @@ def find_leaks(model):
     return leaks
 
 
-def find_leak_mode(model, leaks = [], cutoff_mult = 1):
+def find_leak_mode(model, leaks=[], cutoff_mult=1):
     """ The minimal set of reactions needed to for production
     of leak metabolites (leak_mode) cand be found by min of
     the following program:
@@ -139,13 +139,13 @@ def find_leak_mode(model, leaks = [], cutoff_mult = 1):
     # Add y variables and associated constraints
     for met in w_model.metabolites:
         met_var = prob.Variable("aux_{}".format(met.id),
-                                lb = 0
+                                lb=0
                                 )
 
         const = prob.Constraint(Zero,
-                                name = met.id,
-                                lb = 0,
-                                ub = 0
+                                name=met.id,
+                                lb=0,
+                                ub=0
                                 )
         w_model.add_cons_vars([met_var, const])
 
@@ -161,14 +161,12 @@ def find_leak_mode(model, leaks = [], cutoff_mult = 1):
 
     # Add z variables and associated constraints
     for rxn in w_model.reactions:
-        rxn_var = prob.Variable("rxn_{}".format(rxn.id),
-                                lb = 0,
-                                ub = 0
-                                )
+        rxn_var = prob.Variable("rxn_{}".format(rxn.id))
 
         const = prob.Constraint(rxn.forward_variable + rxn.reverse_variable - rxn_var,
-                                name = "rxn_{}".format(rxn.id),
-                                lb = zero_cutoff
+                                name="rxn_{}".format(rxn.id),
+                                lb=0,
+                                ub=0
                                 )
         rxn_vars_and_cons.extend([rxn_var, const])
         objective += rxn_var**2
@@ -177,7 +175,7 @@ def find_leak_mode(model, leaks = [], cutoff_mult = 1):
 
     # Add objective. since solvers only take linear or quadratic objectives
     # the objective function is left as sum_r(z_r**2)
-    w_model.objective = prob.Objective(objective, direction = 'min')
+    w_model.objective = prob.Objective(objective, direction='min')
 
     # find active reactions for every leak individually
     leak_modes = {}
@@ -189,7 +187,8 @@ def find_leak_mode(model, leaks = [], cutoff_mult = 1):
         sol = w_model.optimize()
         met_var.lb = 0
 
-        rxns_in_mode = [[rxn.id, sol.fluxes[rxn.id]] for rxn in w_model.reactions if abs(sol.fluxes[rxn.id]) >= cutoff_mult * zero_cutoff]
+        rxns_in_mode = [[rxn.id, sol.fluxes[rxn.id]] for rxn in w_model.reactions
+                        if abs(sol.fluxes[rxn.id]) >= cutoff_mult * zero_cutoff]
         leak_modes[leak] = rxns_in_mode
         print(leak, sol.status, len(rxns_in_mode))
 
