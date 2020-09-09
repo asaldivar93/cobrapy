@@ -30,6 +30,7 @@ def find_leaks(model):
     """
     w_model = model.copy()
     prob = w_model.problem
+    zero_cutoff = normalize_cutoff(model, None)
 
     # keep only internal reactions
     for rxn in w_model.reactions:
@@ -78,8 +79,8 @@ def find_leaks(model):
     # if y_i > 0 met_i is a leak in the model
     for var in w_model.variables:
         if 'aux' in var.name:
-            if var.primal > 0:
-                leaks.extend([var.name.replace('aux_', '')])
+            if var.primal > zero_cutoff:
+                leaks.extend([var.name.replace('aux_', ''), var.primal])
 
     return leaks
 
