@@ -62,7 +62,7 @@ def build_sparse_model(model, keep_boundaries=False):
 
         met_vars.extend([met_var])
 
-        return sparse_model, met_vars
+    return sparse_model, met_vars
 
 
 def find_leaks(sparse_model, met_vars):
