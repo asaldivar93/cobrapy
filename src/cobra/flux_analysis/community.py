@@ -2,58 +2,56 @@ from __future__ import absolute_import
 
 from cobra.flux_analysis.helpers import normalize_cutoff
 from optlang.symbolics import Zero
+from copy import deepcopy
 
 
 def build_aggregate_model(model):
-    prob = model.problem
+    ag_model = deepcopy(model)
+    prob = ag_model.problem
     # empty all constraints
-    for constraint in model.constraints:
-        model.remove_cons_vars(constraint)
+    for constraint in ag_model.constraints:
+        ag_model.remove_cons_vars(constraint)
 
     abundance_var = prob.Variable(
-        'abundance_{}'.format(model.name),
+        'abundance_{}'.format(ag_model.name),
         lb=0,
     )
     growth_rate = prob.Variable(
         'growth_rate',
         lb=0,
     )
-    model.add_cons_vars([abundance_var, growth_rate])
+    ag_model.add_cons_vars([abundance_var, growth_rate])
 
-    rxn = model.reactions.get_by_id(
-        'BIOMASS_{}'.format(model.name)
+    rxn = ag_model.reactions.get_by_id(
+        'BIOMASS_{}'.format(ag_model.name)
     )
     growth_cons = prob.Constraint(
         1.0 * rxn.forward_variable * abundance_var - growth_rate * abundance_var,
-        name='growth_{}'.format(model.name),
+        name='growth_{}'.format(ag_model.name),
         lb=0,
         ub=0
     )
-    model.add_cons_vars(growth_cons)
-    model.solver.update()
+    ag_model.add_cons_vars(growth_cons)
+    ag_model.solver.update()
 
-    for met in model.metabolites:
+    cons = Zero
+    all_constraints = []
+    for met in ag_model.metabolites:
+        for rxn in met.reactions:
+            coeff = float(rxn.metabolites[met])
+            cons += coeff * rxn.forward_variable * abundance_var
+            - coeff * rxn.reverse_variable * abundance_var
+
         # Create constraint
         met_cons = prob.Constraint(
-            Zero,
+            cons,
             name=met.id,
             lb=0,
             ub=0
         )
+        all_constraints.append(met_cons)
 
-        model.add_cons_vars(met_cons)
-        rxn_coeffs = []
-        # Get stoichiometrich coefficients
-        # for all reactions of met
-        for rxn in met.reactions:
-            coeff = rxn.metabolites[met]
-            rxn_coeffs.append(
-                [rxn.forward_variable, coeff * abundance_var]
-            )
-            rxn_coeffs.append(
-                [rxn.reverse_variable, -coeff * abundance_var]
-            )
+    ag_model.add_cons_vars(all_constraints)
+    ag_model.solver.update()
 
-        # Add constraint to model
-        rxn_coeffs = dict(rxn_coeffs)
-        model.constraints.get(met.id).set_linear_coefficients(rxn_coeffs)
+    return ag_model
